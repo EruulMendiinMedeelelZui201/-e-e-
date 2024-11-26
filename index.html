@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Membrane Potential Experiment</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f9;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .result {
+      padding: 10px;
+      margin-top: 20px;
+      background-color: #e7f3e7;
+      border-radius: 5px;
+      border: 1px solid #4CAF50;
+    }
+    #webgl-container {
+      width: 100%;
+      height: 500px;
+    }
+
+    /* Responsive styles */
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      .container {
+        padding: 10px;
+        max-width: 100%;
+      }
+      input, select, button {
+        width: 100%;
+      }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Membrane Potential Experiment</h1>
+
+    <!-- Input Form -->
+    <form id="calcForm">
+      <label for="temperature">Temperature (°C):</label>
+      <input type="number" id="temperature" value="37" required>
+
+      <label for="K_out">Extracellular K+ concentration (K_out, mM):</label>
+      <input type="number" id="K_out" value="5" required>
+
+      <label for="K_in">Intracellular K+ concentration (K_in, mM):</label>
+      <input type="number" id="K_in" value="140" required>
+
+      <label for="Na_out">Extracellular Na+ concentration (Na_out, mM):</label>
+      <input type="number" id="Na_out" value="145" required>
+
+      <label for="Na_in">Intracellular Na+ concentration (Na_in, mM):</label>
+      <input type="number" id="Na_in" value="12" required>
+
+      <!-- New fields for permeability -->
+      <label for="P_Na">Permeability of Na+ (P_Na):</label>
+      <input type="number" id="P_Na" value="1" step="0.01" required>
+
+      <label for="P_K">Permeability of K+ (P_K):</label>
+      <input type="number" id="P_K" value="1" step="0.01" required>
+
+      <label for="P_Cl">Permeability of Cl- (P_Cl):</label>
+      <input type="number" id="P_Cl" value="0.1" step="0.01" required>
+
+      <button type="submit">Calculate Membrane Potential</button>
+    </form>
+
+    <!-- Results Section -->
+    <div class="result" id="result" style="display: none;">
+      <h3>Results:</h3>
+      <p><strong>Temperature (°C):</strong> <span id="temp_result"></span> °C</p>
+      <p><strong>Extracellular K+ Concentration:</strong> <span id="K_out_result"></span> mM</p>
+      <p><strong>Intracellular K+ Concentration:</strong> <span id="K_in_result"></span> mM</p>
+      <p><strong>Extracellular Na+ Concentration:</strong> <span id="Na_out_result"></span> mM</p>
+      <p><strong>Intracellular Na+ Concentration:</strong> <span id="Na_in_result"></span> mM</p>
+      <p><strong>Permeability of Na+ (P_Na):</strong> <span id="P_Na_result"></span></p>
+      <p><strong>Permeability of K+ (P_K):</strong> <span id="P_K_result"></span></p>
+      <p><strong>Permeability of Cl- (P_Cl):</strong> <span id="P_Cl_result"></span></p>
+      <p><strong>Equilibrium Potential for K+ (E_K):</strong> <span id="E_K_result"></span> mV</p>
+      <p><strong>Equilibrium Potential for Na+ (E_Na):</strong> <span id="E_Na_result"></span> mV</p>
+      <p><strong>Membrane Potential (Em):</strong> <span id="Em_result"></span> mV (<span id="Em_result_V"></span> V)</p>
+      <p><strong>Formula:</strong> <span id="formula_result"></span></p>
+    </div>
+
+    <!-- 3D Visualization Container -->
+    <div id="webgl-container"></div>
+  </div>
+
+  <script>
+    // Constants
+    const R = 8.314; // Gas constant in J/(mol·K)
+    const F = 96485.0; // Faraday's constant in C/mol
+
+    // Function to calculate membrane potential using the Goldman-Hodgkin-Katz (GHK) equation
+    function calculateEm(temperature, K_out, K_in, Na_out, Na_in, P_Na, P_K, P_Cl) {
+      const T = temperature + 273.15; // Convert Celsius to Kelvin
+
+      // GHK equation for membrane potential
+      const numerator = (P_K * K_out + P_Na * Na_out + P_Cl * 0); // Assume Cl- is not significant
+      const denominator = (P_K * K_in + P_Na * Na_in + P_Cl * 0); // Assume Cl- is not significant
+
+      const E_m = (R * T / F) * Math.log(numerator / denominator); // Membrane potential in Volts
+      
+      // Convert to mV
+      const E_m_mV = E_m * 1000; // Convert to millivolts
+      
+      // Calculate individual ion equilibrium potentials using Nernst equation
+      const E_K = (R * T / F) * Math.log(K_out / K_in);
+      const E_Na = (R * T / F) * Math.log(Na_out / Na_in);
+      
+      return { E_K, E_Na, E_m_mV };
+    }
+
+    // 3D Visualization Setup using Three.js
+    let scene, camera, renderer, membrane;
+    let ionGroups = { Na: [], K: [], Cl: [] };
+
+    function init3DVisualization() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight / 2);
+      document.getElementById('webgl-container').appendChild(renderer.domElement);
+
+      // Membrane Geometry (Maintaining current look)
+      const membraneGeometry = new THREE.SphereGeometry(5, 32, 32); // Adjust radius for size
+      const membraneMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc, wireframe: true });
+      membrane = new THREE.Mesh(membraneGeometry, membraneMaterial);
+      scene.add(membrane);
+
+      // Ion Groups: Na+, K+, Cl-
+      createIonGroup("Na", 0x0000ff, 200, 0.2, 0.5);  // Na+ ions are blue
+      createIonGroup("K", 0xff0000, 200, 0.3, 0.7);  // K+ ions are red
+      createIonGroup("Cl", 0x00ff00, 200, 0.2, 0.6); // Cl- ions are green
+
+      // Light Source
+      const light = new THREE.PointLight(0xffffff, 1, 100);
+      light.position.set(0, 0, 10);
+      scene.add(light);
+
+      camera.position.z = 15;
+
+      // Animation Loop
+      function animate() {
+        requestAnimationFrame(animate);
+
+        // Rotate the membrane
+        membrane.rotation.y += 0.01;
+
+        // Move ions according to their respective gradients
+        ionGroups.Na.forEach(ion => moveIon(ion, 0.2));  // Na+ ions moving out
+        ionGroups.K.forEach(ion => moveIon(ion, -0.2)); // K+ ions moving in
+        ionGroups.Cl.forEach(ion => moveIon(ion, 0.1)); // Cl- ions moving according to permeability
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+    }
+
+    // Create ion group (Na+, K+, Cl-) with initial random positions
+    function createIonGroup(type, color, numIons, minScale, maxScale) {
+      for (let i = 0; i < numIons; i++) {
+        const geometry = new THREE.SphereGeometry(0.2, 16, 16);
+        const material = new THREE.MeshBasicMaterial({ color });
+        const ion = new THREE.Mesh(geometry, material);
+        ion.scale.set(minScale, minScale, minScale); // Initial size
+        ion.position.x = Math.random() * 10 - 5;
+        ion.position.y = Math.random() * 10 - 5;
+        ion.position.z = Math.random() * 10 - 5;
+        ion.type = type;
+        scene.add(ion);
+        ionGroups[type].push(ion);
+      }
+    }
+
+    // Function to move ions based on concentration gradient
+    function moveIon(ion, direction) {
+      const speed = Math.random() * 0.02;
+      ion.position.x += direction * speed;
+
+      // Keep ions within boundaries of the simulation area
+      if (ion.position.x > 5) ion.position.x = 5;
+      if (ion.position.x < -5) ion.position.x = -5;
+    }
+
+    // Form Submission and Result Calculation
+    document.getElementById('calcForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const temperature = parseFloat(document.getElementById('temperature').value);
+      const K_out = parseFloat(document.getElementById('K_out').value);
+      const K_in = parseFloat(document.getElementById('K_in').value);
+      const Na_out = parseFloat(document.getElementById('Na_out').value);
+      const Na_in = parseFloat(document.getElementById('Na_in').value);
+      const P_Na = parseFloat(document.getElementById('P_Na').value);
+      const P_K = parseFloat(document.getElementById('P_K').value);
+      const P_Cl = parseFloat(document.getElementById('P_Cl').value);
+
+      if (isNaN(temperature) || isNaN(K_out) || isNaN(K_in) || isNaN(Na_out) || isNaN(Na_in) || isNaN(P_Na) || isNaN(P_K) || isNaN(P_Cl)) {
+        alert("Please enter valid numeric values for all fields.");
+        return;
+      }
+
+      const { E_K, E_Na, E_m_mV } = calculateEm(temperature, K_out, K_in, Na_out, Na_in, P_Na, P_K, P_Cl);
+
+      // Display results
+      document.getElementById('temp_result').textContent = temperature;
+      document.getElementById('K_out_result').textContent = K_out;
+      document.getElementById('K_in_result').textContent = K_in;
+      document.getElementById('Na_out_result').textContent = Na_out;
+      document.getElementById('Na_in_result').textContent = Na_in;
+      document.getElementById('P_Na_result').textContent = P_Na;
+      document.getElementById('P_K_result').textContent = P_K;
+      document.getElementById('P_Cl_result').textContent = P_Cl;
+      document.getElementById('E_K_result').textContent = E_K.toFixed(2);
+      document.getElementById('E_Na_result').textContent = E_Na.toFixed(2);
+      document.getElementById('Em_result').textContent = E_m_mV.toFixed(2);
+      document.getElementById('Em_result_V').textContent = (E_m_mV / 1000).toFixed(4); // Convert to V
+      document.getElementById('formula_result').textContent = `GHK equation for E_m`;
+
+      document.getElementById('result').style.display = 'block';
+    });
+
+    // Initialize 3D visualization
+    init3DVisualization();
+  </script>
+</body>
+</html>
