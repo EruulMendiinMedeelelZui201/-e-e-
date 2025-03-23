@@ -1,160 +1,181 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="mn">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Membrane Potential Experiment</title>
+  <title>GHK Тэгшитгэл Тооцоологч болон 3D Мембран</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Poppins', sans-serif;
+      background-color: #f4f6f9;
       margin: 0;
       padding: 20px;
-      background-color: #f4f4f9;
     }
+
     .container {
-      max-width: 800px;
-      margin: 0 auto;
       background-color: white;
-      padding: 20px;
-      border-radius: 10px;
+      padding: 40px;
+      max-width: 600px;
+      margin: 0 auto;
+      border-radius: 8px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
+
     h1 {
       text-align: center;
+      font-weight: 600;
+      color: #333;
     }
+
     label {
       display: block;
-      margin: 10px 0 5px;
+      margin-top: 15px;
+      font-weight: 500;
+      color: #333;
     }
+
     input, select {
       width: 100%;
-      padding: 8px;
-      margin-bottom: 20px;
+      padding: 12px;
+      margin-top: 6px;
+      font-size: 16px;
       border-radius: 5px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
+      border: 1px solid #ddd;
+      background-color: #fafafa;
     }
+
     button {
-      width: 100%;
-      padding: 10px;
       background-color: #4CAF50;
       color: white;
+      font-size: 16px;
+      font-weight: 600;
+      padding: 14px;
+      margin-top: 20px;
+      width: 100%;
       border: none;
       border-radius: 5px;
       cursor: pointer;
     }
+
     button:hover {
       background-color: #45a049;
     }
+
     .result {
-      padding: 10px;
-      margin-top: 20px;
-      background-color: #e7f3e7;
-      border-radius: 5px;
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #eafaf1;
       border: 1px solid #4CAF50;
-    }
-    #webgl-container {
-      width: 100%;
-      height: 500px;
+      border-radius: 8px;
+      display: none;
     }
 
-    /* Responsive styles */
+    .result h2 {
+      font-weight: 600;
+      color: #4CAF50;
+      margin-bottom: 10px;
+    }
+
+    .result p {
+      margin: 8px 0;
+      font-size: 16px;
+      color: #333;
+    }
+
+    .result span {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .error {
+      color: #e74c3c;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    /* WebGL Container */
+    #webgl-container {
+      width: 100%;
+      height: 300px;
+      margin-top: 20px;
+    }
+
+    /* Responsive Design */
     @media (max-width: 600px) {
-      body {
-        padding: 10px;
-      }
       .container {
-        padding: 10px;
-        max-width: 100%;
+        padding: 20px;
       }
-      input, select, button {
-        width: 100%;
+
+      button {
+        font-size: 14px;
+      }
+
+      .result p {
+        font-size: 14px;
       }
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h1>Membrane Potential Experiment</h1>
 
-    <!-- Input Form -->
-    <form id="calcForm">
-      <label for="temperature">Temperature (°C):</label>
+  <div class="container">
+    <h1>GHK Тэгшитгэл Тооцоологч</h1>
+
+    <form id="ghk-form">
+      <label for="temperature">Температур (°C):</label>
       <input type="number" id="temperature" value="37" required>
 
-      <label for="K_out">Extracellular K+ concentration (K_out, mM):</label>
+      <label for="K_out">Гадаад K+ концентраци (K_out, мМ):</label>
       <input type="number" id="K_out" value="5" required>
 
-      <label for="K_in">Intracellular K+ concentration (K_in, mM):</label>
+      <label for="K_in">Дотоод K+ концентраци (K_in, мМ):</label>
       <input type="number" id="K_in" value="140" required>
 
-      <label for="Na_out">Extracellular Na+ concentration (Na_out, mM):</label>
+      <label for="Na_out">Гадаад Na+ концентраци (Na_out, мМ):</label>
       <input type="number" id="Na_out" value="145" required>
 
-      <label for="Na_in">Intracellular Na+ concentration (Na_in, mM):</label>
+      <label for="Na_in">Дотоод Na+ концентраци (Na_in, мМ):</label>
       <input type="number" id="Na_in" value="12" required>
 
-      <!-- New fields for permeability -->
-      <label for="P_Na">Permeability of Na+ (P_Na):</label>
-      <input type="number" id="P_Na" value="1" step="0.01" required>
+      <label for="Cl_out">Гадаад Cl- концентраци (Cl_out, мМ):</label>
+      <input type="number" id="Cl_out" value="120" required>
 
-      <label for="P_K">Permeability of K+ (P_K):</label>
-      <input type="number" id="P_K" value="1" step="0.01" required>
+      <label for="Cl_in">Дотоод Cl- концентраци (Cl_in, мМ):</label>
+      <input type="number" id="Cl_in" value="4" required>
 
-      <label for="P_Cl">Permeability of Cl- (P_Cl):</label>
-      <input type="number" id="P_Cl" value="0.1" step="0.01" required>
+      <label for="P_K">K+ хувийн нэвтрэлтийн коэффициент (P_K):</label>
+      <input type="number" id="P_K" value="1" required>
 
-      <button type="submit">Calculate Membrane Potential</button>
+      <label for="P_Na">Na+ хувийн нэвтрэлтийн коэффициент (P_Na):</label>
+      <input type="number" id="P_Na" value="0.04" required>
+
+      <label for="P_Cl">Cl- хувийн нэвтрэлтийн коэффициент (P_Cl):</label>
+      <input type="number" id="P_Cl" value="0.45" required>
+
+      <button type="submit">Гадаад потенциал тооцоолох</button>
     </form>
 
-    <!-- Results Section -->
-    <div class="result" id="result" style="display: none;">
-      <h3>Results:</h3>
-      <p><strong>Temperature (°C):</strong> <span id="temp_result"></span> °C</p>
-      <p><strong>Extracellular K+ Concentration:</strong> <span id="K_out_result"></span> mM</p>
-      <p><strong>Intracellular K+ Concentration:</strong> <span id="K_in_result"></span> mM</p>
-      <p><strong>Extracellular Na+ Concentration:</strong> <span id="Na_out_result"></span> mM</p>
-      <p><strong>Intracellular Na+ Concentration:</strong> <span id="Na_in_result"></span> mM</p>
-      <p><strong>Permeability of Na+ (P_Na):</strong> <span id="P_Na_result"></span></p>
-      <p><strong>Permeability of K+ (P_K):</strong> <span id="P_K_result"></span></p>
-      <p><strong>Permeability of Cl- (P_Cl):</strong> <span id="P_Cl_result"></span></p>
-      <p><strong>Equilibrium Potential for K+ (E_K):</strong> <span id="E_K_result"></span> mV</p>
-      <p><strong>Equilibrium Potential for Na+ (E_Na):</strong> <span id="E_Na_result"></span> mV</p>
-      <p><strong>Membrane Potential (Em):</strong> <span id="Em_result"></span> mV (<span id="Em_result_V"></span> V)</p>
-      <p><strong>Formula:</strong> <span id="formula_result"></span></p>
+    <div class="result" id="result">
+      <h2>Тооцооны Үр Дүн:</h2>
+      <p><strong>K+ тэгшитгэлийн потенциал:</strong> <span id="V_K"></span> мВ</p>
+      <p><strong>Na+ тэгшитгэлийн потенциал:</strong> <span id="V_Na"></span> мВ</p>
+      <p><strong>Cl- тэгшитгэлийн потенциал:</strong> <span id="V_Cl"></span> мВ</p>
+      <p><strong>Гадаад потенциал (Vm):</strong> <span id="Vm"></span> мВ</p>
+      <p><strong>K+ цахилгаан химийн хүч (VDF):</strong> <span id="VDF_K"></span> мВ</p>
+      <p><strong>Na+ цахилгаан химийн хүч (VDF):</strong> <span id="VDF_Na"></span> мВ</p>
+      <p><strong>Cl- цахилгаан химийн хүч (VDF):</strong> <span id="VDF_Cl"></span> мВ</p>
     </div>
 
-    <!-- 3D Visualization Container -->
-    <div id="webgl-container"></div>
+    <div class="error" id="error-message" style="display:none;">Бүх талбаруудыг зөв бөглөнө үү.</div>
   </div>
 
+  <!-- WebGL Visualization of Membrane and Ions -->
+  <div id="webgl-container"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
-    // Constants
-    const R = 8.314; // Gas constant in J/(mol·K)
-    const F = 96485.0; // Faraday's constant in C/mol
-
-    // Function to calculate membrane potential using the Goldman-Hodgkin-Katz (GHK) equation
-    function calculateEm(temperature, K_out, K_in, Na_out, Na_in, P_Na, P_K, P_Cl) {
-      const T = temperature + 273.15; // Convert Celsius to Kelvin
-
-      // GHK equation for membrane potential
-      const numerator = (P_K * K_out + P_Na * Na_out + P_Cl * 0); // Assume Cl- is not significant
-      const denominator = (P_K * K_in + P_Na * Na_in + P_Cl * 0); // Assume Cl- is not significant
-
-      const E_m = (R * T / F) * Math.log(numerator / denominator); // Membrane potential in Volts
-      
-      // Convert to mV
-      const E_m_mV = E_m * 1000; // Convert to millivolts
-      
-      // Calculate individual ion equilibrium potentials using Nernst equation
-      const E_K = (R * T / F) * Math.log(K_out / K_in);
-      const E_Na = (R * T / F) * Math.log(Na_out / Na_in);
-      
-      return { E_K, E_Na, E_m_mV };
-    }
-
-    // 3D Visualization Setup using Three.js
+    // 3D мембраныг харах код
     let scene, camera, renderer, membrane;
     let ionGroups = { Na: [], K: [], Cl: [] };
 
@@ -227,8 +248,11 @@
       if (ion.position.x < -5) ion.position.x = -5;
     }
 
-    // Form Submission and Result Calculation
-    document.getElementById('calcForm').addEventListener('submit', function(event) {
+    // Call 3D visualization function
+    init3DVisualization();
+
+    // Existing GHK calculation code
+    document.getElementById('ghk-form').addEventListener('submit', function (event) {
       event.preventDefault();
 
       const temperature = parseFloat(document.getElementById('temperature').value);
@@ -236,37 +260,60 @@
       const K_in = parseFloat(document.getElementById('K_in').value);
       const Na_out = parseFloat(document.getElementById('Na_out').value);
       const Na_in = parseFloat(document.getElementById('Na_in').value);
-      const P_Na = parseFloat(document.getElementById('P_Na').value);
+      const Cl_out = parseFloat(document.getElementById('Cl_out').value);
+      const Cl_in = parseFloat(document.getElementById('Cl_in').value);
       const P_K = parseFloat(document.getElementById('P_K').value);
+      const P_Na = parseFloat(document.getElementById('P_Na').value);
       const P_Cl = parseFloat(document.getElementById('P_Cl').value);
 
-      if (isNaN(temperature) || isNaN(K_out) || isNaN(K_in) || isNaN(Na_out) || isNaN(Na_in) || isNaN(P_Na) || isNaN(P_K) || isNaN(P_Cl)) {
-        alert("Please enter valid numeric values for all fields.");
+      // Check for valid inputs
+      if (isNaN(temperature) || isNaN(K_out) || isNaN(K_in) || isNaN(Na_out) || isNaN(Na_in) || isNaN(Cl_out) || isNaN(Cl_in) || isNaN(P_K) || isNaN(P_Na) || isNaN(P_Cl)) {
+        document.getElementById('error-message').style.display = 'block';
         return;
       }
 
-      const { E_K, E_Na, E_m_mV } = calculateEm(temperature, K_out, K_in, Na_out, Na_in, P_Na, P_K, P_Cl);
+      // Calculate equilibrium potentials for K+, Na+, Cl-
+      const V_K = calculateVeq(K_out, K_in, temperature);
+      const V_Na = calculateVeq(Na_out, Na_in, temperature);
+      const V_Cl = calculateVeq(Cl_out, Cl_in, temperature);
+
+      // Calculate Vm
+      const Vm = calculateVm(temperature, K_out, K_in, Na_out, Na_in, Cl_out, Cl_in, P_K, P_Na, P_Cl);
+
+      // Calculate electrochemical driving forces
+      const VDF_K = Vm - V_K;
+      const VDF_Na = Vm - V_Na;
+      const VDF_Cl = Vm - V_Cl;
 
       // Display results
-      document.getElementById('temp_result').textContent = temperature;
-      document.getElementById('K_out_result').textContent = K_out;
-      document.getElementById('K_in_result').textContent = K_in;
-      document.getElementById('Na_out_result').textContent = Na_out;
-      document.getElementById('Na_in_result').textContent = Na_in;
-      document.getElementById('P_Na_result').textContent = P_Na;
-      document.getElementById('P_K_result').textContent = P_K;
-      document.getElementById('P_Cl_result').textContent = P_Cl;
-      document.getElementById('E_K_result').textContent = E_K.toFixed(2);
-      document.getElementById('E_Na_result').textContent = E_Na.toFixed(2);
-      document.getElementById('Em_result').textContent = E_m_mV.toFixed(2);
-      document.getElementById('Em_result_V').textContent = (E_m_mV / 1000).toFixed(4); // Convert to V
-      document.getElementById('formula_result').textContent = `GHK equation for E_m`;
-
       document.getElementById('result').style.display = 'block';
+      document.getElementById('error-message').style.display = 'none';
+
+      document.getElementById('V_K').textContent = V_K.toFixed(2);
+      document.getElementById('V_Na').textContent = V_Na.toFixed(2);
+      document.getElementById('V_Cl').textContent = V_Cl.toFixed(2);
+      document.getElementById('Vm').textContent = Vm.toFixed(2);
+      document.getElementById('VDF_K').textContent = VDF_K.toFixed(2);
+      document.getElementById('VDF_Na').textContent = VDF_Na.toFixed(2);
+      document.getElementById('VDF_Cl').textContent = VDF_Cl.toFixed(2);
     });
 
-    // Initialize 3D visualization
-    init3DVisualization();
+    // Function to calculate equilibrium potential
+    function calculateVeq(outConcentration, inConcentration, temperature) {
+      const R = 8.314;  // J/mol·K (universal gas constant)
+      const F = 9.65e4; // C/mol (Faraday's constant)
+      const T = temperature + 273.15; // Kelvin
+      return (R * T / F) * Math.log(outConcentration / inConcentration);
+    }
+
+    // Function to calculate membrane potential
+    function calculateVm(temperature, K_out, K_in, Na_out, Na_in, Cl_out, Cl_in, P_K, P_Na, P_Cl) {
+      const V_K = calculateVeq(K_out, K_in, temperature);
+      const V_Na = calculateVeq(Na_out, Na_in, temperature);
+      const V_Cl = calculateVeq(Cl_out, Cl_in, temperature);
+
+      return (P_K * V_K + P_Na * V_Na + P_Cl * V_Cl) / (P_K + P_Na + P_Cl);
+    }
   </script>
 </body>
 </html>
