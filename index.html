@@ -303,17 +303,21 @@
       const R = 8.314;  // J/mol·K (universal gas constant)
       const F = 9.65e4; // C/mol (Faraday's constant)
       const T = temperature + 273.15; // Kelvin
-      return (R * T / F) * Math.log(outConcentration / inConcentration);
+      return (R * T / F) * Math.log(outConcentration / inConcentration) * 1000;  // Convert to mV
     }
 
-    // Function to calculate membrane potential
+    // Function to calculate membrane potential (Vm)
     function calculateVm(temperature, K_out, K_in, Na_out, Na_in, Cl_out, Cl_in, P_K, P_Na, P_Cl) {
-      const V_K = calculateVeq(K_out, K_in, temperature);
-      const V_Na = calculateVeq(Na_out, Na_in, temperature);
-      const V_Cl = calculateVeq(Cl_out, Cl_in, temperature);
+      const R = 8.314;  // J/mol·K (universal gas constant)
+      const F = 9.65e4; // C/mol (Faraday's constant)
+      const T = temperature + 273.15; // Kelvin
 
-      return (P_K * V_K + P_Na * V_Na + P_Cl * V_Cl) / (P_K + P_Na + P_Cl);
+      const numerator = P_K * K_out + P_Na * Na_out + P_Cl * Cl_in;
+      const denominator = P_K * K_in + P_Na * Na_in + P_Cl * Cl_out;
+
+      return (R * T / F) * Math.log(numerator / denominator) * 1000;  // Convert to mV
     }
   </script>
+
 </body>
 </html>
