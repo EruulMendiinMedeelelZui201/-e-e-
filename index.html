@@ -123,26 +123,26 @@
     <h1>GHK Тэгшитгэл Тооцоологч</h1>
 
     <form id="ghk-form">
-      <label for="temperature">Температур (°C):</label>
-      <input type="number" id="temperature" value="37" required>
+      <label for="temperature">Температур (°K):</label>
+      <input type="number" id="temperature" value="310" required>
 
       <label for="K_out">Гадаад K+ концентраци (K_out, мМ):</label>
-      <input type="number" id="K_out" value="5" required>
+      <input type="number" id="K_out" value="8" required>
 
       <label for="K_in">Дотоод K+ концентраци (K_in, мМ):</label>
-      <input type="number" id="K_in" value="140" required>
+      <input type="number" id="K_in" value="160" required>
 
       <label for="Na_out">Гадаад Na+ концентраци (Na_out, мМ):</label>
-      <input type="number" id="Na_out" value="145" required>
+      <input type="number" id="Na_out" value="160" required>
 
       <label for="Na_in">Дотоод Na+ концентраци (Na_in, мМ):</label>
-      <input type="number" id="Na_in" value="12" required>
+      <input type="number" id="Na_in" value="18" required>
 
       <label for="Cl_out">Гадаад Cl- концентраци (Cl_out, мМ):</label>
-      <input type="number" id="Cl_out" value="120" required>
+      <input type="number" id="Cl_out" value="130" required>
 
       <label for="Cl_in">Дотоод Cl- концентраци (Cl_in, мМ):</label>
-      <input type="number" id="Cl_in" value="4" required>
+      <input type="number" id="Cl_in" value="10" required>
 
       <label for="P_K">K+ хувийн нэвтрэлтийн коэффициент (P_K):</label>
       <input type="number" id="P_K" value="1" required>
@@ -251,72 +251,88 @@
     // Call 3D visualization function
     init3DVisualization();
 
-    // Existing GHK calculation code
     document.getElementById('ghk-form').addEventListener('submit', function (event) {
-      event.preventDefault();
+  event.preventDefault();
 
-      const temperature = parseFloat(document.getElementById('temperature').value);
-      const K_out = parseFloat(document.getElementById('K_out').value);
-      const K_in = parseFloat(document.getElementById('K_in').value);
-      const Na_out = parseFloat(document.getElementById('Na_out').value);
-      const Na_in = parseFloat(document.getElementById('Na_in').value);
-      const Cl_out = parseFloat(document.getElementById('Cl_out').value);
-      const Cl_in = parseFloat(document.getElementById('Cl_in').value);
-      const P_K = parseFloat(document.getElementById('P_K').value);
-      const P_Na = parseFloat(document.getElementById('P_Na').value);
-      const P_Cl = parseFloat(document.getElementById('P_Cl').value);
+  // Retrieve and parse input values
+  const temperature = parseFloat(document.getElementById('temperature').value);
+  const K_out = parseFloat(document.getElementById('K_out').value);
+  const K_in = parseFloat(document.getElementById('K_in').value);
+  const Na_out = parseFloat(document.getElementById('Na_out').value);
+  const Na_in = parseFloat(document.getElementById('Na_in').value);
+  const Cl_out = parseFloat(document.getElementById('Cl_out').value);
+  const Cl_in = parseFloat(document.getElementById('Cl_in').value);
+  const P_K = parseFloat(document.getElementById('P_K').value);
+  const P_Na = parseFloat(document.getElementById('P_Na').value);
+  const P_Cl = parseFloat(document.getElementById('P_Cl').value);
 
-      // Check for valid inputs
-      if (isNaN(temperature) || isNaN(K_out) || isNaN(K_in) || isNaN(Na_out) || isNaN(Na_in) || isNaN(Cl_out) || isNaN(Cl_in) || isNaN(P_K) || isNaN(P_Na) || isNaN(P_Cl)) {
-        document.getElementById('error-message').style.display = 'block';
-        return;
-      }
+  // Validate inputs
+  if ([temperature, K_out, K_in, Na_out, Na_in, Cl_out, Cl_in, P_K, P_Na, P_Cl].some(isNaN)) {
+    document.getElementById('error-message').style.display = 'block';
+    return;
+  }
 
-      // Calculate equilibrium potentials for K+, Na+, Cl-
-      const V_K = calculateVeq(K_out, K_in, temperature);
-      const V_Na = calculateVeq(Na_out, Na_in, temperature);
-      const V_Cl = calculateVeq(Cl_out, Cl_in, temperature);
+  // Calculate equilibrium potentials using the Nernst equation
+  const V_K = calculateEquilibriumPotential(K_out, K_in, temperature, 1);
+  const V_Na = calculateEquilibriumPotential(Na_out, Na_in, temperature, 1);
+  const V_Cl = calculateEquilibriumPotential(Cl_out, Cl_in, temperature, -1); // Cl- has a negative charge
 
-      // Calculate Vm
-      const Vm = calculateVm(temperature, K_out, K_in, Na_out, Na_in, Cl_out, Cl_in, P_K, P_Na, P_Cl);
+  // Calculate membrane potential
+  const Vm = calculateMembranePotential(temperature, K_out, K_in, Na_out, Na_in, Cl_out, Cl_in, P_K, P_Na, P_Cl);
 
-      // Calculate electrochemical driving forces
-      const VDF_K = Vm - V_K;
-      const VDF_Na = Vm - V_Na;
-      const VDF_Cl = Vm - V_Cl;
+  // Calculate electrochemical driving forces
+  const VDF_K = Vm - V_K;
+  const VDF_Na = Vm - V_Na;
+  const VDF_Cl = Vm - V_Cl;
 
-      // Display results
-      document.getElementById('result').style.display = 'block';
-      document.getElementById('error-message').style.display = 'none';
+  // Display results
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('error-message').style.display = 'none';
 
-      document.getElementById('V_K').textContent = V_K.toFixed(2);
-      document.getElementById('V_Na').textContent = V_Na.toFixed(2);
-      document.getElementById('V_Cl').textContent = V_Cl.toFixed(2);
-      document.getElementById('Vm').textContent = Vm.toFixed(2);
-      document.getElementById('VDF_K').textContent = VDF_K.toFixed(2);
-      document.getElementById('VDF_Na').textContent = VDF_Na.toFixed(2);
-      document.getElementById('VDF_Cl').textContent = VDF_Cl.toFixed(2);
-    });
+  document.getElementById('V_K').textContent = V_K.toFixed(2);
+  document.getElementById('V_Na').textContent = V_Na.toFixed(2);
+  document.getElementById('V_Cl').textContent = V_Cl.toFixed(2);
+  document.getElementById('Vm').textContent = Vm.toFixed(2);
+  document.getElementById('VDF_K').textContent = VDF_K.toFixed(2);
+  document.getElementById('VDF_Na').textContent = VDF_Na.toFixed(2);
+  document.getElementById('VDF_Cl').textContent = VDF_Cl.toFixed(2);
+});
 
-    // Function to calculate equilibrium potential
-    function calculateVeq(outConcentration, inConcentration, temperature) {
-      const R = 8.314;  // J/mol·K (universal gas constant)
-      const F = 9.65e4; // C/mol (Faraday's constant)
-      const T = temperature + 273.15; // Kelvin
-      return (R * T / F) * Math.log(outConcentration / inConcentration) * 1000;  // Convert to mV
-    }
+// Function to calculate equilibrium potential using the Nernst equation
+function calculateEquilibriumPotential(outConcentration, inConcentration, temperature, charge) {
+  const R = 8.314;  // Universal gas constant (J/(mol·K))
+  const F = 96485;  // Faraday's constant (C/mol)
+  const T = temperature + 273.15; // Convert Celsius to Kelvin
 
-    // Function to calculate membrane potential (Vm)
-    function calculateVm(temperature, K_out, K_in, Na_out, Na_in, Cl_out, Cl_in, P_K, P_Na, P_Cl) {
-      const R = 8.314;  // J/mol·K (universal gas constant)
-      const F = 9.65e4; // C/mol (Faraday's constant)
-      const T = temperature + 273.15; // Kelvin
+  if (outConcentration <= 0 || inConcentration <= 0) return NaN; // Prevent log(0) errors
 
-      const numerator = P_K * K_out + P_Na * Na_out + P_Cl * Cl_in;
-      const denominator = P_K * K_in + P_Na * Na_in + P_Cl * Cl_out;
+  return (R * T / (charge * F)) * Math.log(outConcentration / inConcentration) * 1000;  // Convert to mV
+}
 
-      return (R * T / F) * Math.log(numerator / denominator) * 1000;  // Convert to mV
-    }
+function calculateMembranePotential(temperature, K_out, K_in, Na_out, Na_in, Cl_out, Cl_in, P_K, P_Na, P_Cl) {
+  const R = 8.314;  // Universal gas constant in J/(mol·K)
+  const F = 96485;  // Faraday's constant in C/mol
+  const T = temperature; // Don't add 273.15, already in Kelvin
+
+  if (K_out <= 0 || K_in <= 0 || Na_out <= 0 || Na_in <= 0 || Cl_out <= 0 || Cl_in <= 0) return NaN;
+
+  const numerator = (P_K * K_out) + (P_Na * Na_out) + (P_Cl * Cl_in);
+  const denominator = (P_K * K_in) + (P_Na * Na_in) + (P_Cl * Cl_out);
+
+  console.log("Numerator:", numerator);
+  console.log("Denominator:", denominator);
+
+  if (numerator <= 0 || denominator <= 0) {
+    console.error("Numerator or denominator is invalid.");
+    return NaN;
+  }
+
+  const Vm = (R * T / F) * Math.log(numerator / denominator) * 1000;  // Convert to mV
+  console.log("Vm:", Vm);
+  return Vm;
+}
+
+
   </script>
 
 </body>
